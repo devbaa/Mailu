@@ -1,3 +1,5 @@
+.. _antispam:
+
 Spam filtering
 ==============
 
@@ -154,6 +156,40 @@ For more information on using the multimap filter see the official `multimap doc
 .. _`1438`: https://github.com/Mailu/Mailu/issues/1438
 .. _`1167`: https://github.com/Mailu/Mailu/issues/1167
 .. _`1566`: https://github.com/Mailu/Mailu/issues/1566
+
+How can I whitelist a domain?
+-----------------------------
+
+Mailu enforces strict anti-spoofing rules: inbound mail that claims to come
+from one of your own (local) domains is rejected unless it passes DMARC (or,
+lacking a DMARC record, at least DKIM or SPF). These *forced* rejects run
+regardless of the spam score, which is why adding a negative score for a
+sender in the Rspamd web interface is not enough to whitelist it.
+
+To whitelist sender domains, set ``WHITELIST_SENDER_DOMAINS`` in ``mailu.env``
+(comma separated list) and recreate the antispam container:
+
+.. code-block:: bash
+
+  WHITELIST_SENDER_DOMAINS=newsletter-service.com,partner.org
+
+A whitelisted domain (matched against both the envelope sender and the
+``From`` header):
+
+* is exempted from the forced anti-spoofing rejects, falling back to normal
+  score-based processing, and
+* receives a strong negative spam score (-10) when it matches the envelope
+  sender.
+
+Antivirus and dangerous-macro rejects still apply to whitelisted domains.
+
+Alternatively — and without restarting anything — create the file
+``/mailu/overrides/rspamd/whitelisted_sender_domain.map`` with one domain per
+line. This file replaces the list from ``WHITELIST_SENDER_DOMAINS`` and is
+live-reloaded by Rspamd.
+
+Use this sparingly: sender domains can be forged, so every whitelisted domain
+weakens your anti-spoofing posture for that domain.
 
 Can I change the list of authorized file attachments?
 -----------------------------------------------------

@@ -16,7 +16,7 @@ env = system.set_env()
 config_files = []
 for rspamd_file in glob.glob("/conf/*"):
     conf.jinja(rspamd_file, env, os.path.join("/etc/rspamd/local.d", os.path.basename(rspamd_file)))
-    if rspamd_file != '/conf/forbidden_file_extension.map':
+    if rspamd_file not in ('/conf/forbidden_file_extension.map', '/conf/whitelisted_sender_domain.map'):
         config_files.append(os.path.basename(rspamd_file))
 
 for override_file in glob.glob("/overrides/*"):

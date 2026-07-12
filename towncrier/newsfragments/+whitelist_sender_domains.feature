@@ -1,0 +1,1 @@
+Add first-class sender-domain whitelisting. The new ``WHITELIST_SENDER_DOMAINS`` setting (or the live-reloaded ``overrides/rspamd/whitelisted_sender_domain.map`` file) exempts the listed domains from the forced anti-spoofing rejects and gives envelope matches a negative spam score. Antivirus and macro rejects still apply to whitelisted domains.

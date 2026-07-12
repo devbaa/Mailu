@@ -40,6 +40,16 @@ address.
 The ``WILDCARD_SENDERS`` setting is a comma delimited list of user email addresses
 that are allowed to send emails from any existing address (spoofing the sender).
 
+The ``WHITELIST_SENDER_DOMAINS`` setting is a comma delimited list of sender
+domains that are exempted from the forced anti-spoofing rejects and, when the
+domain matches the envelope sender, given a strong negative spam score.
+Antivirus and dangerous-macro checks still apply. Use this when a legitimate
+external service sends email on behalf of one of your domains without proper
+SPF/DKIM/DMARC, or when mail from a partner domain keeps being rejected. See
+the :ref:`antispam documentation <antispam>` for details and for managing the
+list via an overrides file instead. Sender domains can be forged — only
+whitelist domains you must.
+
 .. _AUTH Ratelimit:
 
 The ``AUTH_RATELIMIT_IP`` (default: 5/hour) holds a security setting for fighting

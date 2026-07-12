@@ -1,0 +1,9 @@
+# Sender domains exempted from the forced anti-spoofing rejects and given a
+# negative spam score on envelope match. Antivirus and macro scanning still
+# apply to whitelisted domains.
+# Managed via the WHITELIST_SENDER_DOMAINS setting in mailu.env, or replaced
+# entirely by providing overrides/rspamd/whitelisted_sender_domain.map
+# (one domain per line).
+{%- for domain in (WHITELIST_SENDER_DOMAINS or '').split(',') if domain.strip() %}
+{{ domain.strip().lower() }}
+{%- endfor %}
