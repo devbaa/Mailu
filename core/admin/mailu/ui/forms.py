@@ -206,8 +206,8 @@ class DomainAccessForm(flask_wtf.FlaskForm):
 
 class AnonymousAliasForm(flask_wtf.FlaskForm):
     domain = fields.SelectField(_('Domain'), [validators.DataRequired()])
-    hostname = fields.StringField(_('Hostname (optional)'), [validators.Optional()])
-    note = fields.StringField(_('Note (optional)'), [validators.Optional()])
+    hostname = fields.StringField(_('Hostname (optional)'), [validators.Optional(), validators.Length(max=255)])
+    note = fields.StringField(_('Note (optional)'), [validators.Optional(), validators.Length(max=255)])
     submit = fields.SubmitField(_('Generate alias'))
 
 

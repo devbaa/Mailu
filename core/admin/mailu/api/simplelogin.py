@@ -62,21 +62,32 @@ class RandomAlias(Resource):
         note = data.get('note')
         hostname = request.args.get('hostname')
 
+        if note is not None and not isinstance(note, str):
+            return {'code': 400, 'message': 'note must be a string'}, 400
+        if note and len(note) > 255:
+            return {'code': 400, 'message': 'note is too long (max 255 characters)'}, 400
+        if hostname and len(hostname) > 255:
+            return {'code': 400, 'message': 'hostname is too long (max 255 characters)'}, 400
+
         # Find all domains with anonmail access
-        accessible_domains = []
-        for d in models.Domain.query.all():
-            if (models.has_domain_access(d.name, user=g.user) or
-                (d.anonmail_enabled and g.user.domain and d.name == g.user.domain.name)):
-                accessible_domains.append(d.name)
+        accessible_domains = models.anonmail_accessible_domains(g.user)
 
         if not accessible_domains:
             return {'code': 403, 'message': 'You do not have access to any domains for creating aliases'}, 403
 
+        # Never pick a domain whose alias quota is already exhausted
+        open_domains = [
+            d for d in accessible_domains
+            if d.max_aliases == -1 or len(d.aliases) < d.max_aliases
+        ]
+        if not open_domains:
+            return {'code': 409, 'message': 'The alias quota of every accessible domain has been reached'}, 409
+
         # Select random domain from accessible domains
-        domain_name = secrets.choice(accessible_domains)
+        domain_name = secrets.choice(open_domains).name
 
         if hostname and not note:
-            note = f'Website: {hostname}'
+            note = f'Website: {hostname}'[:255]
 
         # Generate unique alias localpart
         localpart = None

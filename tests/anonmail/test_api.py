@@ -130,8 +130,9 @@ class TestAnonymousAliasAPI:
             assert localpart.startswith('github.'), f"Expected localpart {localpart} to start with 'github.'"
             parts = localpart.split('.')
             assert len(parts) == 2
-            # Second part should be alphabetic (a word)
-            assert parts[1].isalpha(), f"Expected word after dot, got {parts[1]}"
+            # Second part should be a word followed by 4 digits
+            assert parts[1][:-4].isalpha() and parts[1][-4:].isdigit(), \
+                f"Expected word + 4 digits after dot, got {parts[1]}"
 
     def test_no_hostname_generates_random_word(self, app, client, create_user_and_token, grant_domain_access):
         """Test that without hostname, a simple random word is generated (SimpleLogin behavior)"""

@@ -947,6 +947,28 @@ def has_domain_access(domain_name, user=None):
     return db.session.query(query.exists()).scalar()
 
 
+def anonmail_accessible_domains(user):
+    """Return the domains on which the user may create anonymous aliases:
+    every domain for global administrators, otherwise domains the user
+    manages, domains the user was explicitly granted access to, and the
+    user's own domain when it has anonmail enabled.
+    """
+    if user is None:
+        return []
+    if getattr(user, 'global_admin', False):
+        return Domain.query.all()
+
+    granted = db.session.query(DomainAccess.domain_name).filter(
+        DomainAccess.user_email == user.email)
+    managed = db.session.query(managers.c.domain_name).filter(
+        managers.c.user_email == user.email)
+    return Domain.query.filter(sqlalchemy.or_(
+        sqlalchemy.and_(Domain.anonmail_enabled == True, Domain.name == user.domain_name),
+        Domain.name.in_(granted),
+        Domain.name.in_(managed),
+    )).all()
+
+
 class MailuConfig:
     """ Class which joins whole Mailu config for dumping
         and loading

@@ -72,11 +72,8 @@ def alias_delete(alias):
 @access.authenticated
 def anonalias_list():
     user = flask_login.current_user
-    has_access = any(
-        models.has_domain_access(d.name, user=user) or (d.anonmail_enabled and user.domain and d.name == user.domain.name)
-        for d in models.Domain.query.all()
-    )
-    
+    has_access = bool(models.anonmail_accessible_domains(user))
+
     # Query user's anonymous aliases, standard aliases do not have an owner_email
     aliases = models.Alias.query.filter_by(owner_email=user.email).all()
     
@@ -90,19 +87,21 @@ def anonalias_create():
     form = forms.AnonymousAliasForm()
     
     # Populate domain choices
-    available_domains = []
-    for d in models.Domain.query.all():
-        if models.has_domain_access(d.name, user=user) or (d.anonmail_enabled and user.domain and d.name == user.domain.name):
-            available_domains.append((d.name, d.name))
-    
+    accessible_domains = {d.name: d for d in models.anonmail_accessible_domains(user)}
+    available_domains = [(name, name) for name in accessible_domains]
+
     form.domain.choices = available_domains
-    
+
     if not available_domains:
         flask.flash('You do not have access to any domains for creating anonymous aliases.', 'error')
         return flask.redirect(flask.url_for('.anonalias_list'))
-    
+
     if form.validate_on_submit():
         domain_name = form.domain.data
+        domain = accessible_domains[domain_name]
+        if not domain.max_aliases == -1 and len(domain.aliases) >= domain.max_aliases:
+            flask.flash('Too many aliases for domain %s' % domain, 'error')
+            return flask.redirect(flask.url_for('.anonalias_list'))
         hostname = form.hostname.data
         note = form.note.data
         destination = [user.email]

@@ -8,12 +8,13 @@ class TestAnonymousAliasLocalpart:
         """Test anonymous alias generation with hostname"""
         result = utils.generate_anonymous_alias_localpart(hostname='www.example.com')
         assert isinstance(result, str)
-        assert '.' in result  # Should have format: hostname_prefix.word
+        assert '.' in result  # Should have format: hostname_prefix.word + 4 digits
         prefix, word = result.split('.', 1)
         assert prefix == 'example'
-        assert word.isalpha()
-        assert word.islower()
-        assert 5 <= len(word) <= 10
+        assert word[:-4].isalpha()
+        assert word[:-4].islower()
+        assert word[-4:].isdigit()
+        assert 5 <= len(word[:-4]) <= 10
 
     def test_generate_anonymous_alias_localpart_without_hostname(self):
         """Test anonymous alias generation without hostname"""

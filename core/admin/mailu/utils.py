@@ -13,6 +13,7 @@ import dns.rdtypes
 import dns.rdatatype
 import dns.rdataclass
 
+import functools
 import hmac
 import secrets
 import string
@@ -554,11 +555,23 @@ def truncated_pw_hash(pw):
 
 
 
+@functools.lru_cache(maxsize=1)
+def anonymous_alias_words():
+    """Dictionary words usable as the random part of an anonymous alias."""
+    try:
+        return tuple(sorted({
+            word.lower()
+            for word in RandomWord().filter(word_min_length=5, word_max_length=10)
+            if word.isalpha()
+        }))
+    except Exception:
+        return ()
+
 def generate_anonymous_alias_localpart(hostname=None):
     """Generate a localpart for an anonymous alias.
 
     Pattern:
-    - With hostname: hostname_prefix.randomword (e.g., groupon.banana)
+    - With hostname: hostname_prefix.randomword + 4 digits (e.g., groupon.banana1234)
     - Without hostname: random_token
 
     Args:
@@ -577,23 +590,21 @@ def generate_anonymous_alias_localpart(hostname=None):
                 hostname_prefix = obj.domain
         except (tld_exceptions.TldDomainNotFound, tld_exceptions.TldBadUrl):
             hostname_prefix = None
-    
+
     if hostname_prefix:
         hostname_prefix = ''.join(c for c in hostname_prefix.lower() if c.isalnum())
 
-        # Try to get a random word for hostname-based aliases
-        random_part = None
-        try:
-            rw = RandomWord()
-            candidate = rw.word(word_min_length=5, word_max_length=10)
-            if candidate and isinstance(candidate, str):
-                w = candidate.strip().lower()
-                if w.isalpha():
-                    random_part = w
-        except Exception:
-            # Fallback to random token if word generation fails
+    if hostname_prefix:
+        # Pick the word with a CSPRNG and append digits so that aliases
+        # cannot be predicted or enumerated from the hostname alone.
+        words = anonymous_alias_words()
+        if words:
+            random_part = f'{secrets.choice(words)}{secrets.randbelow(10000):04d}'
+        else:
             random_part = secrets.token_urlsafe(10)
 
+        # RFC 5321 limits localparts to 64 characters
+        hostname_prefix = hostname_prefix[:64 - len(random_part) - 1]
         return f"{hostname_prefix}.{random_part}"
 
     # No hostname: return short random token

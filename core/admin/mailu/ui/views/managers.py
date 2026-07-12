@@ -25,7 +25,9 @@ def manager_create(domain_name):
     ]
     if form.validate_on_submit():
         user = models.User.query.get(form.manager.data)
-        if user.email not in [user.email for user in available_users]:
+        if user is None:
+            flask.abort(404)
+        elif user.email not in [user.email for user in available_users]:
             flask.abort(403)
         elif user in domain.managers:
             flask.flash('User %s is already manager' % user, 'error')
@@ -75,6 +77,9 @@ def domain_access_create(domain_name):
         user = models.User.query.get(user_email)
         if user is None:
             return flask.jsonify({'code':404, 'message':'User not found'}), 404
+        # Same restriction as the form below: only users of this domain
+        if user.domain_name != domain.name:
+            return flask.jsonify({'code':403, 'message':'User does not belong to this domain'}), 403
         existing = models.DomainAccess.query.filter_by(domain_name=domain.name, user_email=user.email).first()
         if existing:
             return flask.jsonify({'code':409, 'message':f'User {user.email} already has access to {domain.name}'}), 409

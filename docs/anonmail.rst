@@ -11,7 +11,7 @@ password managers like Bitwarden. The API follows the SimpleLogin model.
 Features:
 
 - Random alias generation via admin UI or API
-- Optional hostname-based alias prefixes (e.g. ``github.alpha@example.com``)
+- Optional hostname-based alias prefixes (e.g. ``github.alpha1234@example.com``)
 - Per-domain access control
 
 Administration
@@ -61,9 +61,12 @@ Endpoint
 
 **Parameters:**
 
-- ``hostname`` (query string, optional): Website hostname for alias prefix generation
-- ``note`` (JSON body, optional): Alias description
-- ``destination`` (JSON body, optional): Forwarding address (string or array)
+- ``hostname`` (query string, optional): Website hostname for alias prefix generation (max 255 characters)
+- ``note`` (JSON body, optional): Alias description (max 255 characters)
+
+Aliases always forward to the mailbox of the authenticated user. Domains whose
+``max_aliases`` quota has been reached are skipped; if no accessible domain has
+room left, the API responds with ``409``.
 
 **Example:**
 
