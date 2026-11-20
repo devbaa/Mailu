@@ -1,6 +1,14 @@
 name: Alpine 3.24 compatibility (diagnostic only)
 
 on:
+  pull_request:
+    branches: [2024.06]
+    paths:
+      - '.github/workflows/alpine324-compatibility.yml'
+      - 'docs/alpine324-migration.md'
+      - 'core/**'
+      - 'webmails/**'
+      - 'tests/build.hcl'
   workflow_dispatch:
     inputs:
       target:
@@ -33,14 +41,14 @@ jobs:
       - uses: docker/setup-buildx-action@v3
       - name: Report selected base and target
         env:
-          TARGET: ${{ inputs.target }}
+          TARGET: ${{ inputs.target || 'base' }}
         run: |
           echo "Target: $TARGET"
           echo "Base: ghcr.io/mailu/alpine:3.24.3"
           echo "Diagnostic build only; no push or registry promotion"
       - name: Build candidate with Alpine 3.24
         env:
-          TARGET: ${{ inputs.target }}
+          TARGET: ${{ inputs.target || 'base' }}
         run: |
           set -euo pipefail
           docker buildx bake \
