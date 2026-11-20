@@ -6,6 +6,7 @@ import flask
 import socket
 import os
 import sqlalchemy.exc
+from mailu.internal.dovecot24_compat import userdb_fields
 
 @internal.route("/dovecot/passdb/<path:user_email>")
 def dovecot_passdb_dict(user_email):
@@ -15,7 +16,7 @@ def dovecot_passdb_dict(user_email):
     if app.config["SUBNET6"]:
         allow_nets.append(app.config["SUBNET6"])
     return flask.jsonify({
-        "password": None,
+        "password": "" if flask.request.args.get("format") == "2.4" else None,
         "nopassword": "Y",
         "allow_real_nets": ",".join(allow_nets)
     })
@@ -32,6 +33,10 @@ def dovecot_userdb_dict(user_email):
         quota = models.User.query.filter(models.User.email==user_email).with_entities(models.User.quota_bytes).one_or_none() or flask.abort(404)
     except sqlalchemy.exc.StatementError as exc:
         flask.abort(404)
+    if flask.request.args.get("format") == "2.4":
+        # The 2.4 Lua userdb has no legacy dict quota_rule syntax.
+        # Keep uid/gid and Maildir home identical to deployed 2.3.
+        return flask.jsonify(userdb_fields(user_email, quota[0]))
     return flask.jsonify({
         "quota_rule": f"*:bytes={quota[0]}"
     })
