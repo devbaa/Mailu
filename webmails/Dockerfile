@@ -14,7 +14,7 @@ COPY roundcube/roundcube.diff /tmp/roundcube.diff
 # than failing, so the check below catches a bad aspell-*/backend pairing.
 RUN set -euxo pipefail \
   ; apk add --no-cache \
-    nginx gpg gpg-agent patch \
+    'nginx>=1.30.7-r0' gpg gpg-agent patch \
     php84 php84-fpm php84-mbstring php84-zip php84-xml php84-simplexml php84-pecl-apcu \
     php84-dom php84-curl php84-exif gd php84-gd php84-iconv php84-intl php84-openssl php84-ctype \
     php84-pdo_sqlite php84-pdo_mysql php84-pdo_pgsql php84-pdo php84-sodium libsodium php84-tidy \
